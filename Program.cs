@@ -1,8 +1,6 @@
 ﻿using FastEndpoints;
 using FastEndpoints.Swagger;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using RecipeBook.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,14 +9,34 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// FastEndpoints
+// ✅ Add CORS before building
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// FastEndpoints and Swagger
 builder.Services.AddFastEndpoints();
 builder.Services.SwaggerDocument();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// ✅ Use CORS before endpoints
+app.UseCors();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseFastEndpoints();
-app.UseSwaggerGen();
+
 app.Run();
+
+
 
 // 👇 This part is only for EF Core tools (Add-Migration, Update-Database)
 public partial class Program
